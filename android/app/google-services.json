@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "634762571104",
+    "project_id": "ckjan-a8f1c",
+    "storage_bucket": "ckjan-a8f1c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:634762571104:android:576b0e34270d19b3c5c205",
+        "android_client_info": {
+          "package_name": "com.example.chat_app_provider"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxEy_EJepzPhIbeiaGxUQls6_ui37XX8M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:634762571104:android:55727f4a02a0100dc5c205",
+        "android_client_info": {
+          "package_name": "com.example.ckjan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxEy_EJepzPhIbeiaGxUQls6_ui37XX8M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
