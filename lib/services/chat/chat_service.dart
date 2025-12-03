@@ -1,6 +1,8 @@
 import 'package:chat_app_provider/models/messages.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ChatService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -29,6 +31,7 @@ class ChatService {
         .doc(chatroomId)
         .collection('messages')
         .add(messages.toMap());
+        
   }
 
   Stream<QuerySnapshot> getMessages(String senderId, receiverId) {
@@ -51,5 +54,44 @@ class ChatService {
         return data;
       }).toList();
     });
+  }
+
+  Future addOrUpdateUser(String name, String email) async {
+    final usersCollection = FirebaseFirestore.instance.collection(
+      'Users',
+    );
+
+    final query = await usersCollection
+        .where('email', isEqualTo: email)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      // Ab safe hai first use karna
+      // final docData = query.docs.first.data();
+      // final String userEmail = docData['email'];
+      final docId = query.docs.first.id;
+
+      await usersCollection.doc(docId).update({'AddedUser': true});
+      print("Existing user updated");
+    } else {
+      Get.snackbar(
+        "Not Logged In",
+        "User is not logged in, so action cannot be performed.",
+        titleText: Text(
+          "Not Logged In",
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        messageText: Text(
+          "User is not logged in, so action cannot be performed.",
+          style: TextStyle(color: Colors.black),
+        ),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.white,
+      );
+      return;
+    }
   }
 }

@@ -2,6 +2,7 @@ import 'package:chat_app_provider/Themes/theme_provider.dart';
 import 'package:chat_app_provider/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:provider/provider.dart';
 import 'services/auth/auth_gate.dart';
 
@@ -10,6 +11,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeProvider(),
@@ -23,7 +25,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'update code ',
       theme: Provider.of<ThemeProvider>(context).themeData,

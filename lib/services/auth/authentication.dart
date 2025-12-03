@@ -19,9 +19,9 @@ class Authentication {
             password: password,
           );
 
-      firestore.collection('Users').doc(userCredential.user!.uid).set(
-        {'uid': userCredential.user!.uid, 'email': email},
-      );
+      // firestore.collection('Users').doc(userCredential.user!.uid).set(
+      //   {'uid': userCredential.user!.uid, 'email': email},
+      // );
       return userCredential;
     } on FirebaseAuthException catch (e) {
       throw Exception(e.code);
@@ -43,11 +43,12 @@ class Authentication {
 
       await firestore
           .collection('Users')
-          .doc(userCredential.user!.uid)
+          .doc(userCredential.user!.email)
           .set({
             'uid': userCredential.user!.uid,
             'email': email,
             'username': name,
+            'AddedUser': false,
           });
 
       return userCredential;

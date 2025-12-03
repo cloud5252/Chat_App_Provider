@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 class ChatBubble extends StatelessWidget {
   final String message;
   final bool isCurrentUser;
-  ChatBubble({
+  const ChatBubble({
     super.key,
     required this.message,
     required this.isCurrentUser,

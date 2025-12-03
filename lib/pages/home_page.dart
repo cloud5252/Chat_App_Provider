@@ -2,14 +2,14 @@ import 'package:chat_app_provider/components/userTile.dart';
 import 'package:chat_app_provider/pages/chat_page.dart';
 import 'package:chat_app_provider/services/auth/authentication.dart';
 import 'package:chat_app_provider/services/chat/chat_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../components/MY_drawer.dart';
 
 final ChatService service = ChatService();
-final TextEditingController controller = TextEditingController();
+final TextEditingController userEmailcontroller =
+    TextEditingController();
 final TextEditingController userNamecontroller =
     TextEditingController();
 final Authentication authentication = Authentication();
@@ -18,26 +18,15 @@ User? getuser() {
   return firestore.currentUser;
 }
 
-void addUser(
-  String userName,
-  String Email,
-  BuildContext context,
-) async {
-  final user = FirebaseAuth.instance.currentUser;
+void addUser(BuildContext context) async {
+  await service.addOrUpdateUser(
+    userNamecontroller.text,
+    userEmailcontroller.text,
+  );
 
-  if (user != null) {
-    final docRef = await FirebaseFirestore.instance
-        .collection('Users')
-        .doc();
-    final id = docRef.id;
-    await docRef.set({
-      'uid': id,
-      'email': Email,
-      'username': userName,
-    });
-  }
   Navigator.pop(context);
-  controller.clear();
+  userEmailcontroller.clear();
+  userNamecontroller.clear();
 }
 
 void addNewUser(BuildContext context) {
@@ -52,7 +41,7 @@ void addNewUser(BuildContext context) {
           child: Column(
             children: [
               TextField(
-                controller: controller,
+                controller: userNamecontroller,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: 'User Name',
@@ -60,7 +49,7 @@ void addNewUser(BuildContext context) {
               ),
               SizedBox(height: 10),
               TextField(
-                controller: userNamecontroller,
+                controller: userEmailcontroller,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: 'Enter email',
@@ -81,11 +70,7 @@ void addNewUser(BuildContext context) {
             ),
           ),
           TextButton(
-            onPressed: () => addUser(
-              userNamecontroller.text,
-              controller.text,
-              context,
-            ),
+            onPressed: () => addUser(context),
             child: Text(
               'Confirmed',
               style: TextStyle(
@@ -127,6 +112,7 @@ class HomePage extends StatelessWidget {
       drawer: MyDrawer(),
       body: geruserbuilder(),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
         onPressed: () => addNewUser(context),
         child: Icon(Icons.add),
       ),
@@ -143,8 +129,27 @@ class HomePage extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: const CircularProgressIndicator());
         }
+        final usersList = snapshot.data!;
+
+        final filteredUsers = usersList
+            .where((user) => user['AddedUser'] == true)
+            .toList();
+
+        if (filteredUsers.isEmpty) {
+          return Center(
+            child: Text(
+              "No User",
+              style: TextStyle(
+                fontSize: 22,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          );
+        }
+        // AddUser value nikal lo
+
         return ListView(
-          children: snapshot.data!
+          children: filteredUsers
               .map<Widget>(
                 (userData) => builduserlistitem(userData, context),
               )

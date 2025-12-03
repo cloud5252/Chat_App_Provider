@@ -29,6 +29,7 @@ class ChatPage extends StatelessWidget {
         recieverId,
         _messagesController.text,
       );
+      _messagesController.clear();
     }
   }
 
