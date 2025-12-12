@@ -28,11 +28,10 @@ class ChatPage extends StatelessWidget {
 
   void sendmessage() async {
     if (_messagesController.text.isNotEmpty) {
-      await chatService.sendMessages(
-        recieverId,
-        _messagesController.text,
-      );
+      String messageText = _messagesController.text;
       _messagesController.clear();
+
+      await chatService.sendMessages(recieverId, messageText);
     }
   }
 
