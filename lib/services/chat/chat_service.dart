@@ -1,13 +1,10 @@
 import 'package:chat_app_provider/models/messages.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class ChatService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
   Future<void> sendMessages(String recieverId, message) async {
     final String currentUserId = _firebaseAuth.currentUser!.uid;
     final String currentuseremail =
@@ -31,7 +28,6 @@ class ChatService {
         .doc(chatroomId)
         .collection('messages')
         .add(messages.toMap());
-        
   }
 
   Stream<QuerySnapshot> getMessages(String senderId, receiverId) {
@@ -47,51 +43,111 @@ class ChatService {
         .snapshots();
   }
 
-  Stream<List<Map<String, dynamic>>> getuserStream() {
-    return firestore.collection('Users').snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return data;
-      }).toList();
-    });
+  Stream<List<Map<String, dynamic>>> getCurrentUserAddedUsers(
+    String currentUserEmail,
+  ) async* {
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('email', isEqualTo: currentUserEmail)
+          .get();
+
+      if (query.docs.isEmpty) {
+        print("User not found!");
+        yield [];
+        return;
+      }
+
+      final userDocId = query.docs.first.id;
+
+      yield* FirebaseFirestore.instance
+          .collection('Users')
+          .doc(userDocId)
+          .collection('AddedUser')
+          .snapshots()
+          .map(
+            (snapshot) =>
+                snapshot.docs.map((doc) => doc.data()).toList(),
+          );
+    } catch (e) {
+      print("Error: $e");
+      yield [];
+    }
   }
 
-  Future addOrUpdateUser(String name, String email) async {
-    final usersCollection = FirebaseFirestore.instance.collection(
-      'Users',
-    );
+  Future addOrUpdateUser(
+    String name,
+    String email,
+    String currentUserEmail,
+  ) async {
+    try {
+      final currentUserQuery = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('email', isEqualTo: currentUserEmail)
+          .get();
 
-    final query = await usersCollection
-        .where('email', isEqualTo: email)
-        .get();
+      if (currentUserQuery.docs.isEmpty) {
+        return;
+      }
 
-    if (query.docs.isNotEmpty) {
-      // Ab safe hai first use karna
-      // final docData = query.docs.first.data();
-      // final String userEmail = docData['email'];
-      final docId = query.docs.first.id;
+      final currentUserDocId = currentUserQuery.docs.first.id;
 
-      await usersCollection.doc(docId).update({'AddedUser': true});
-      print("Existing user updated");
-    } else {
-      Get.snackbar(
-        "Not Logged In",
-        "User is not logged in, so action cannot be performed.",
-        titleText: Text(
-          "Not Logged In",
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        messageText: Text(
-          "User is not logged in, so action cannot be performed.",
-          style: TextStyle(color: Colors.black),
-        ),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.white,
-      );
-      return;
+      final addedUsersSubcollection = FirebaseFirestore.instance
+          .collection('Users')
+          .doc(currentUserDocId)
+          .collection('AddedUser');
+
+      final newDocRef = addedUsersSubcollection.doc();
+
+      Map<String, dynamic> addedUserData = {
+        'Name': name,
+        'Email': email,
+        'uid': newDocRef.id,
+        'addedAt': FieldValue.serverTimestamp(),
+      };
+
+      // await newDocRef.set(addedUserData);
+
+      await addedUsersSubcollection.add(addedUserData);
+    } catch (e) {}
+  }
+
+  Future<void> editMessage(
+    String newMessage,
+    String chatRoomId,
+    String messageId,
+  ) async {
+    try {
+      await firestore
+          .collection('chat_rooms')
+          .doc(chatRoomId)
+          .collection('messages')
+          .doc(messageId)
+          .update({
+            'message': newMessage,
+            'isEdited': true,
+            'editedAt': Timestamp.now(),
+          });
+
+      print('Message updated successfully');
+    } catch (e) {
+      print('Error updating message: $e');
+    }
+  }
+
+  Future<void> deleteMessage(
+    String chatRoomId,
+    String messageId,
+  ) async {
+    try {
+      await firestore
+          .collection('chat_rooms')
+          .doc(chatRoomId)
+          .collection('messages')
+          .doc(messageId)
+          .delete();
+    } catch (e) {
+      throw Exception('Failed to delete message: $e');
     }
   }
 }

@@ -1,8 +1,9 @@
+import 'package:chat_app_provider/components/MY_message_edit.dart';
 import 'package:chat_app_provider/components/My_text_feilds.dart';
-import 'package:chat_app_provider/components/chat_bubble.dart';
+
+import 'package:chat_app_provider/services/chat/chat_Edit_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
 import '../services/auth/authentication.dart';
 import '../services/chat/chat_service.dart';
 
@@ -10,6 +11,7 @@ class ChatPage extends StatelessWidget {
   final String recieverEmail;
   final String recieverId;
   final String userName;
+
   ChatPage({
     super.key,
     required this.recieverEmail,
@@ -20,6 +22,7 @@ class ChatPage extends StatelessWidget {
       TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  final ChatEditService chatEditService = ChatEditService();
   final ChatService chatService = ChatService();
   final Authentication authentication = Authentication();
 
@@ -31,6 +34,12 @@ class ChatPage extends StatelessWidget {
       );
       _messagesController.clear();
     }
+  }
+
+  String getChatRoomId(String userId1, String userId2) {
+    List<String> ids = [userId1, userId2];
+    ids.sort();
+    return ids.join('_');
   }
 
   @override
@@ -85,30 +94,90 @@ class ChatPage extends StatelessWidget {
         return ListView(
           controller: _scrollController,
           children: messages
-              .map((doc) => buildMessageItem(doc))
+              .map((doc) => buildMessageItem(doc, context))
               .toList(),
         );
       },
     );
   }
 
-  Widget buildMessageItem(DocumentSnapshot document) {
+  Widget buildMessageItem(
+    DocumentSnapshot document,
+    BuildContext context,
+  ) {
     Map<String, dynamic> data =
         document.data() as Map<String, dynamic>;
+    String messageId = document.id;
 
     bool currentUserId =
         data["senderId"] == authentication.getCurrentuser()!.uid;
-
     var alignment = (currentUserId)
         ? Alignment.topRight
         : Alignment.topLeft;
 
-    return Container(
-      alignment: alignment,
-      child: ChatBubble(
-        message: data['message'],
-        isCurrentUser: currentUserId,
+    return MyMessageEdit(
+      onDelete: () => chatEditService.showDeleteDialog(
+        context: context,
+        onDelete: () async {
+          try {
+            String currentUserId = authentication
+                .getCurrentuser()!
+                .uid;
+            String otherUserId = data['senderId'] == currentUserId
+                ? data['receiverID']
+                : data['senderId'];
+
+            String chatRoomId = getChatRoomId(
+              currentUserId,
+              otherUserId,
+            );
+
+            await chatService.deleteMessage(chatRoomId, messageId);
+
+            chatEditService.showSuccessMessage('Message deleted');
+          } catch (e) {
+            chatEditService.showErrorMessage(
+              'Failed to delete message',
+            );
+          }
+        },
       ),
+      onCopy: () =>
+          chatEditService.copyToClipboard(data['message'], context),
+      onEdit: () => chatEditService.editMessage(
+        data['message'] ?? '',
+        data,
+        context: context,
+        onSave: (String editedMessage) async {
+          String currentUserId = authentication.getCurrentuser()!.uid;
+
+          String otherUserId = data['senderId'] == currentUserId
+              ? data['receiverID']
+              : data['senderId'];
+
+          String chatRoomId = getChatRoomId(
+            currentUserId,
+            otherUserId,
+          );
+
+          await chatService.editMessage(
+            editedMessage,
+            chatRoomId,
+            messageId,
+          );
+        },
+        customTextField: (controller) => TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Type your message',
+            border: OutlineInputBorder(),
+          ),
+        ),
+      ),
+      message: data['message'] ?? '',
+      isCurrentUser: currentUserId,
+      alignment: alignment,
+      userId: currentUserId.toString(),
     );
   }
 

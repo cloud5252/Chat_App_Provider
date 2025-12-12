@@ -3,8 +3,10 @@ import 'package:chat_app_provider/pages/chat_page.dart';
 import 'package:chat_app_provider/services/auth/authentication.dart';
 import 'package:chat_app_provider/services/chat/chat_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import '../components/MY_drawer.dart';
 
 final ChatService service = ChatService();
@@ -13,69 +15,86 @@ final TextEditingController userEmailcontroller =
 final TextEditingController userNamecontroller =
     TextEditingController();
 final Authentication authentication = Authentication();
-FirebaseAuth firestore = FirebaseAuth.instance;
-User? getuser() {
-  return firestore.currentUser;
+FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+
+User? getUser() {
+  return firebaseAuth.currentUser;
 }
 
 void addUser(BuildContext context) async {
+  User? currentUser = getUser();
+
+  if (currentUser == null) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('User not logged in!')));
+    return;
+  }
+
+  if (userEmailcontroller.text.isEmpty ||
+      userNamecontroller.text.isEmpty) {
+    Get.snackbar(
+      'Required',
+      'Please fill all fields.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.white,
+      colorText: Colors.black,
+    );
+    return;
+  }
+
   await service.addOrUpdateUser(
-    userNamecontroller.text,
-    userEmailcontroller.text,
+    userNamecontroller.text.trim(),
+    userEmailcontroller.text.trim(),
+    currentUser.email!,
   );
 
   Navigator.pop(context);
+
   userEmailcontroller.clear();
   userNamecontroller.clear();
 }
 
 void addNewUser(BuildContext context) {
-  showDialog(
+  showCupertinoDialog(
     context: context,
     builder: (context) {
-      return AlertDialog(
-        backgroundColor: Colors.white70,
+      return CupertinoAlertDialog(
         title: Text('Add new User'),
-        content: SizedBox(
-          height: 150,
-          child: Column(
-            children: [
-              TextField(
-                controller: userNamecontroller,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'User Name',
-                ),
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: userEmailcontroller,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Enter email',
-                ),
-              ),
-            ],
-          ),
+        content: Column(
+          children: [
+            SizedBox(height: 10),
+            CupertinoTextField(
+              controller: userNamecontroller,
+              placeholder: 'User Name',
+              padding: EdgeInsets.all(12),
+            ),
+            SizedBox(height: 10),
+            CupertinoTextField(
+              controller: userEmailcontroller,
+              placeholder: 'User Email',
+              padding: EdgeInsets.all(12),
+            ),
+          ],
         ),
         actions: [
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () => addUser(context),
+            isDefaultAction: true,
             child: Text(
-              'Confirmed',
+              'Confirm',
               style: TextStyle(
-                fontSize: 20,
-                color: Colors.blue,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -121,7 +140,7 @@ class HomePage extends StatelessWidget {
 
   Widget geruserbuilder() {
     return StreamBuilder(
-      stream: service.getuserStream(),
+      stream: service.getCurrentUserAddedUsers(getUser()!.email!),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Text('Error');
@@ -131,9 +150,7 @@ class HomePage extends StatelessWidget {
         }
         final usersList = snapshot.data!;
 
-        final filteredUsers = usersList
-            .where((user) => user['AddedUser'] == true)
-            .toList();
+        final filteredUsers = usersList;
 
         if (filteredUsers.isEmpty) {
           return Center(
@@ -163,25 +180,15 @@ class HomePage extends StatelessWidget {
     Map<String, dynamic> userdata,
     BuildContext context,
   ) {
-    final String currentEmail = authentication
-        .getCurrentuser()!
-        .email!;
-
-    final String userEmail = userdata['email'] ?? '';
-    if (currentEmail.trim().toLowerCase() ==
-        userEmail.trim().toLowerCase()) {
-      return SizedBox.shrink();
-    }
-
     return Usertile(
-      text: userdata['username'] ?? '',
+      text: userdata['Name'] ?? '',
       ontap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ChatPage(
-              recieverEmail: userdata['email'],
-              userName: userdata['username'],
+              recieverEmail: userdata['Email'],
+              userName: userdata['Name'],
               recieverId: userdata['uid'],
             ),
           ),
