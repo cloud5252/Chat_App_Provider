@@ -55,7 +55,7 @@ class ChatService {
           .get();
 
       if (query.docs.isEmpty) {
-        print("User not found!");
+        print(" not found!");
         yield [];
         return;
       }
