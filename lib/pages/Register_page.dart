@@ -46,77 +46,79 @@ class RegisterPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.message,
-              size: 60,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            SizedBox(height: 50),
-            Text(
-              'Lets`s create account for you',
-              style: TextStyle(
-                fontSize: 17,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.message,
+                size: 60,
                 color: Theme.of(context).colorScheme.primary,
               ),
-            ),
-            SizedBox(height: 30),
-
-            MyTextFeilds(
-              hinttext: 'User Name',
-              obsecurtext: false,
-              controller: userNamecontroller,
-            ),
-            SizedBox(height: 10),
-            MyTextFeilds(
-              hinttext: 'Email',
-              obsecurtext: false,
-              controller: Emailcontroller,
-            ),
-            SizedBox(height: 10),
-
-            MyTextFeilds(
-              hinttext: 'Password',
-              obsecurtext: false,
-              controller: passwordcontroller,
-            ),
-            SizedBox(height: 10),
-            MyTextFeilds(
-              hinttext: 'Confirm password',
-              obsecurtext: false,
-              controller: conformedpasswordcontroller,
-            ),
-
-            SizedBox(height: 30),
-            MyButton(
-              text: 'Register',
-              ontap: () => register(context),
-            ),
-            SizedBox(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Allready have an account? ',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+              SizedBox(height: 50),
+              Text(
+                'Lets`s create account for you',
+                style: TextStyle(
+                  fontSize: 17,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-                GestureDetector(
-                  onTap: ontap,
-                  child: Text(
-                    'Login now',
+              ),
+              SizedBox(height: 30),
+
+              MyTextFeilds(
+                hinttext: 'Name',
+                obsecurtext: false,
+                controller: userNamecontroller,
+              ),
+              SizedBox(height: 10),
+              MyTextFeilds(
+                hinttext: 'Email',
+                obsecurtext: false,
+                controller: Emailcontroller,
+              ),
+              SizedBox(height: 10),
+
+              MyTextFeilds(
+                hinttext: 'Password',
+                obsecurtext: false,
+                controller: passwordcontroller,
+              ),
+              SizedBox(height: 10),
+              MyTextFeilds(
+                hinttext: 'Confirm password',
+                obsecurtext: false,
+                controller: conformedpasswordcontroller,
+              ),
+
+              SizedBox(height: 30),
+              MyButton(
+                text: 'Register',
+                ontap: () => register(context),
+              ),
+              SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Allready have an account? ',
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  GestureDetector(
+                    onTap: ontap,
+                    child: Text(
+                      'Login now',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

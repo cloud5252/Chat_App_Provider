@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 class ChatService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  // ChatService.dart mein
   Future<void> sendMessages(String recieverId, message) async {
     final String currentUserId = _firebaseAuth.currentUser!.uid;
     final String currentuseremail =
@@ -12,13 +13,14 @@ class ChatService {
     final Timestamp timestamp = Timestamp.now();
 
     Messages messages = Messages(
-      massage: message,
       receiverID: recieverId,
       senderEmail: currentuseremail,
       senderId: currentUserId,
       timestamp: timestamp,
+      massage: message,
     );
 
+    // ✅ UIDs ko sort karo, emails ko nahi!
     List<String> ids = [currentUserId, recieverId];
     ids.sort();
     String chatroomId = ids.join('_');
@@ -81,35 +83,58 @@ class ChatService {
     String currentUserEmail,
   ) async {
     try {
+      // Current user
       final currentUserQuery = await FirebaseFirestore.instance
           .collection('Users')
           .where('email', isEqualTo: currentUserEmail)
           .get();
 
-      if (currentUserQuery.docs.isEmpty) {
-        return;
-      }
+      if (currentUserQuery.docs.isEmpty) return;
 
-      final currentUserDocId = currentUserQuery.docs.first.id;
+      final currentUserDoc = currentUserQuery.docs.first;
+      final currentUserId = currentUserDoc.id;
 
-      final addedUsersSubcollection = FirebaseFirestore.instance
+      // User to add
+      final addUserQuery = await FirebaseFirestore.instance
           .collection('Users')
-          .doc(currentUserDocId)
-          .collection('AddedUser');
+          .where('email', isEqualTo: email)
+          .get();
 
-      final newDocRef = addedUsersSubcollection.doc();
+      if (addUserQuery.docs.isEmpty) return;
 
-      Map<String, dynamic> addedUserData = {
-        'Name': name,
-        'Email': email,
-        'uid': newDocRef.id,
-        'addedAt': FieldValue.serverTimestamp(),
-      };
+      final addedUserDoc = addUserQuery.docs.first;
+      final addedUserId = addedUserDoc.id;
 
-      // await newDocRef.set(addedUserData);
+      // STEP 1: add to current user's list
+      await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(currentUserId)
+          .collection('AddedUser')
+          .doc(addedUserId)
+          .set({
+            'Name': addedUserDoc['username'],
+            'Email': addedUserDoc['email'],
+            'uid': addedUserId,
+            'addedAt': FieldValue.serverTimestamp(),
+          });
 
-      await addedUsersSubcollection.add(addedUserData);
-    } catch (e) {}
+      // STEP 2: add current user to added user's list
+      await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(addedUserId)
+          .collection('AddedUser')
+          .doc(currentUserId)
+          .set({
+            'Name': currentUserDoc['username'],
+            'Email': currentUserDoc['email'],
+            'uid': currentUserId,
+            'addedAt': FieldValue.serverTimestamp(),
+          });
+
+      print("Both users linked successfully!");
+    } catch (e) {
+      print("Error: $e");
+    }
   }
 
   Future<void> editMessage(

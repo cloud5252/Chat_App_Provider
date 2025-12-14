@@ -108,9 +108,9 @@ class ChatPage extends StatelessWidget {
         document.data() as Map<String, dynamic>;
     String messageId = document.id;
 
-    bool currentUserId =
-        data["senderId"] == authentication.getCurrentuser()!.uid;
-    var alignment = (currentUserId)
+    String currentUserId = authentication.getCurrentuser()!.uid;
+    bool isCurrentUser = data["senderId"] == currentUserId;
+    var alignment = isCurrentUser
         ? Alignment.topRight
         : Alignment.topLeft;
 
@@ -132,7 +132,6 @@ class ChatPage extends StatelessWidget {
             );
 
             await chatService.deleteMessage(chatRoomId, messageId);
-
             chatEditService.showSuccessMessage('Message deleted');
           } catch (e) {
             chatEditService.showErrorMessage(
@@ -149,7 +148,6 @@ class ChatPage extends StatelessWidget {
         context: context,
         onSave: (String editedMessage) async {
           String currentUserId = authentication.getCurrentuser()!.uid;
-
           String otherUserId = data['senderId'] == currentUserId
               ? data['receiverID']
               : data['senderId'];
@@ -158,7 +156,6 @@ class ChatPage extends StatelessWidget {
             currentUserId,
             otherUserId,
           );
-
           await chatService.editMessage(
             editedMessage,
             chatRoomId,
@@ -174,9 +171,9 @@ class ChatPage extends StatelessWidget {
         ),
       ),
       message: data['message'] ?? '',
-      isCurrentUser: currentUserId,
+      isCurrentUser: isCurrentUser,
       alignment: alignment,
-      userId: currentUserId.toString(),
+      userId: data['senderId'],
     );
   }
 
@@ -206,7 +203,7 @@ class ChatPage extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 40),
+          SizedBox(height: 20),
         ],
       ),
     );

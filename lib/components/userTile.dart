@@ -25,7 +25,13 @@ class Usertile extends StatelessWidget {
             Icon(Icons.person),
 
             SizedBox(width: 10),
-            Text(text, style: TextStyle(fontSize: 20)),
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: 20,
+                color: Theme.of(context).colorScheme.inversePrimary,
+              ),
+            ),
           ],
         ),
       ),

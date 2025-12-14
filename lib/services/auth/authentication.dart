@@ -43,7 +43,7 @@ class Authentication {
 
       await firestore
           .collection('Users')
-          .doc(userCredential.user!.email)
+          .doc(userCredential.user!.uid)
           .set({
             'uid': userCredential.user!.uid,
             'email': email,
