@@ -14,7 +14,7 @@ class MyTextFeilds extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 25),
+      padding: EdgeInsets.symmetric(horizontal: 10),
       child: TextField(
         controller: controller,
         obscureText: obsecurtext,
@@ -23,7 +23,7 @@ class MyTextFeilds extends StatelessWidget {
             borderSide: BorderSide(
               color: Theme.of(context).colorScheme.tertiary,
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(10),
           ),
           focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(

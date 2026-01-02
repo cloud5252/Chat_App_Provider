@@ -1,37 +1,109 @@
+import 'package:chat_app_provider/Themes/theme_provider.dart';
 import 'package:chat_app_provider/components/MY_message_edit.dart';
 import 'package:chat_app_provider/components/My_text_feilds.dart';
+import 'package:chat_app_provider/helpers/helpers.dart';
+import 'package:chat_app_provider/models/UserModel.dart';
+import 'package:chat_app_provider/pages/set_languag.dart';
+import 'package:chat_app_provider/services/Ai_service/gemini_translator.dart';
+import 'package:chat_app_provider/services/Ai_service/language_provider.dart';
 
 import 'package:chat_app_provider/services/chat/chat_Edit_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:chat_app_provider/services/chat/chat_local_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/auth/authentication.dart';
 import '../services/chat/chat_service.dart';
 
-class ChatPage extends StatelessWidget {
+class ChatPage extends StatefulWidget {
   final String recieverEmail;
   final String recieverId;
   final String userName;
+  final String myId;
 
-  ChatPage({
+  const ChatPage({
     super.key,
     required this.recieverEmail,
     required this.recieverId,
     required this.userName,
+    required this.myId,
   });
+
+  @override
+  State<ChatPage> createState() => _ChatPageState();
+}
+
+class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messagesController =
       TextEditingController();
   final ScrollController _scrollController = ScrollController();
-
   final ChatEditService chatEditService = ChatEditService();
   final ChatService chatService = ChatService();
   final Authentication authentication = Authentication();
+  late Stream<List<dynamic>> _messageStream;
 
+  @override
+  void initState() {
+    super.initState();
+    List<String> ids = [widget.myId, widget.recieverId];
+    ids.sort();
+    String roomID = ids.join('_');
+    _messageStream = chatService.getHybridMessages(
+      authentication.getCurrentuser()!.uid,
+      widget.recieverId,
+    );
+    ChatLocalService().updateChatRoomId(roomID);
+    ChatLocalService().initializeChatRoom(
+      widget.myId,
+      widget.recieverId,
+    );
+  }
+
+  bool _isLoading = false;
   void sendmessage() async {
-    if (_messagesController.text.isNotEmpty) {
-      String messageText = _messagesController.text;
-      _messagesController.clear();
+    String originalText = _messagesController.text.trim();
+    if (originalText.isEmpty) return;
 
-      await chatService.sendMessages(recieverId, messageText);
+    _messagesController.clear();
+    bool isEnglish = Provider.of<LanguageProvider>(
+      context,
+      listen: false,
+    ).isEnglishMode;
+
+    if (isEnglish) {
+      var connectivityResult = await (Connectivity()
+          .checkConnectivity());
+      if (connectivityResult.contains(ConnectivityResult.none)) {
+        _messagesController.text = originalText;
+        showNoInternetDialog(context);
+        return;
+      }
+    }
+
+    _processAndSendMessage(originalText, isEnglish);
+  }
+
+  Future<void> _processAndSendMessage(
+    String text,
+    bool isEnglish,
+  ) async {
+    String messageToFinalSend = text;
+
+    try {
+      if (isEnglish) {
+        setState(() => _isLoading = true);
+        messageToFinalSend =
+            await GeminiTranslator.translateToEnglish(text);
+        setState(() => _isLoading = false);
+      }
+
+      await chatService.sendMessages(
+        widget.recieverId,
+        messageToFinalSend,
+      );
+    } catch (e) {
+      debugPrint("Send Error: $e");
+      setState(() => _isLoading = false);
     }
   }
 
@@ -43,125 +115,206 @@ class ChatPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.grey,
-        centerTitle: true,
+    bool isDarkMode = Provider.of<ThemeProvider>(
+      context,
+      listen: false,
+    ).isDarkMode;
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.grey,
+          centerTitle: true,
 
-        title: Text(userName),
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back_ios_new),
+          title: Text(widget.userName),
+          automaticallyImplyLeading: false,
+          leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: Icon(Icons.arrow_back_ios_new),
+          ),
+          actions: [
+            PopupMenuButton<String>(
+              color: isDarkMode
+                  ? Colors.grey.shade600
+                  : Colors.grey.shade300,
+
+              shape: RoundedRectangleBorder(
+                side: BorderSide(
+                  color: isDarkMode
+                      ? Colors.white24
+                      : Colors.grey.shade300,
+                  width: 1,
+                ),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              onOpened: () {
+                FocusScope.of(context).unfocus();
+              },
+              onCanceled: () {
+                Future.delayed(const Duration(milliseconds: 5), () {
+                  if (mounted) FocusScope.of(context).unfocus();
+                });
+              },
+              icon: Icon(Icons.more_vert),
+              onSelected: (value) {
+                if (value == 'Setting') {}
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'Setting',
+                  enabled: true,
+                  height: kMinInteractiveDimension,
+                  onTap: () {
+                    FocusScope.of(context).unfocus();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SetLanguag(),
+                      ),
+                    );
+                  },
+                  child: Text('Setting'),
+                ),
+              ],
+            ),
+          ],
         ),
-      ),
 
-      body: Column(
-        children: [
-          Expanded(child: buildmessageslist()),
-          buildMessageInput(),
-        ],
+        body: Column(
+          children: [
+            Expanded(child: buildmessageslist()),
+            buildMessageInput(),
+          ],
+        ),
       ),
     );
   }
 
   Widget buildmessageslist() {
-    String senderId = authentication.getCurrentuser()!.uid;
-    return StreamBuilder(
-      stream: chatService.getMessages(senderId, recieverId),
+    return StreamBuilder<List<dynamic>>(
+      stream: _messageStream,
+
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text('Error'));
+          return Center(child: Text('Error: ${snapshot.error}'));
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
         }
-        final messages = snapshot.data!.docs;
+
+        final messages = snapshot.data ?? [];
+
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients) {
-            _scrollController.animateTo(
+            _scrollController.jumpTo(
               _scrollController.position.maxScrollExtent,
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeOut,
             );
           }
         });
-        return ListView(
+
+        return ListView.builder(
           controller: _scrollController,
-          children: messages
-              .map((doc) => buildMessageItem(doc, context))
-              .toList(),
+          itemCount: messages.length,
+          itemBuilder: (context, index) {
+            var message = messages[index];
+            Map<String, dynamic> data;
+
+            if (message is ChatMessage) {
+              data = {
+                'senderId': message.senderId,
+                'receiverID': message.receiverId,
+                'message': message.messageText,
+                'timestamp': message.timestamp,
+                'id': message.id.toString(), // Isar ID
+                'messageId': message.firebaseId,
+                'isRead': message.isRead,
+              };
+            } else {
+              data = message as Map<String, dynamic>;
+              data['id'] = data['id'] ?? '';
+            }
+
+            return buildMessageItem(data, context);
+          },
         );
       },
     );
   }
 
   Widget buildMessageItem(
-    DocumentSnapshot document,
+    Map<String, dynamic> data,
     BuildContext context,
   ) {
-    Map<String, dynamic> data =
-        document.data() as Map<String, dynamic>;
-    String messageId = document.id;
+    // 1. Basic Data Extraction
+    final String myId = authentication.getCurrentuser()!.uid;
+    final String messageText = data['message'] ?? '';
+    final String senderId = data['senderId'] ?? '';
+    final String messageId = data['messageId'] ?? data['id'] ?? '';
+    final DateTime timestamp = data['timestamp'] ?? DateTime.now();
 
-    String currentUserId = authentication.getCurrentuser()!.uid;
-    bool isCurrentUser = data["senderId"] == currentUserId;
-    var alignment = isCurrentUser
+    final bool isCurrentUser = (senderId == myId);
+    final bool isDelivered = data['isDelivered'] ?? false;
+
+    int currentStatus = 0;
+    if (data['isRead'] != null) {
+      currentStatus = data['isRead'] is int
+          ? data['isRead']
+          : (int.tryParse(data['isRead'].toString()) ?? 0);
+    }
+
+    final String otherUserId = isCurrentUser
+        ? (data['receiverID'] ?? "")
+        : senderId;
+    final String chatRoomId = getChatRoomId(myId, otherUserId);
+
+    if (!isCurrentUser && currentStatus < 3 && messageId.isNotEmpty) {
+      chatService.updateMessageStatus(chatRoomId, messageId, 3);
+    }
+
+    final alignment = isCurrentUser
         ? Alignment.topRight
         : Alignment.topLeft;
 
+    Future<void> handleDelete() async {
+      try {
+        await chatService.deleteMessage(chatRoomId, messageId);
+        chatEditService.showSuccessMessage('Message deleted');
+      } catch (e) {
+        chatEditService.showErrorMessage('Failed to delete message');
+      }
+    }
+
+    Future<void> handleEdit(String editedMessage) async {
+      await chatService.editMessage(
+        editedMessage,
+        chatRoomId,
+        messageId.toString(),
+      );
+    }
+
     return MyMessageEdit(
+      message: messageText,
+      isCurrentUser: isCurrentUser,
+      alignment: alignment,
+      userId: senderId,
+      isRead: currentStatus,
+      isDelivered: isDelivered,
+      time: timestamp,
       onDelete: () => chatEditService.showDeleteDialog(
         context: context,
-        onDelete: () async {
-          try {
-            String currentUserId = authentication
-                .getCurrentuser()!
-                .uid;
-            String otherUserId = data['senderId'] == currentUserId
-                ? data['receiverID']
-                : data['senderId'];
-
-            String chatRoomId = getChatRoomId(
-              currentUserId,
-              otherUserId,
-            );
-
-            await chatService.deleteMessage(chatRoomId, messageId);
-            chatEditService.showSuccessMessage('Message deleted');
-          } catch (e) {
-            chatEditService.showErrorMessage(
-              'Failed to delete message',
-            );
-          }
-        },
+        onDelete: handleDelete,
       ),
       onCopy: () =>
-          chatEditService.copyToClipboard(data['message'], context),
+          chatEditService.copyToClipboard(messageText, context),
       onEdit: () => chatEditService.editMessage(
-        data['message'] ?? '',
+        messageText,
         data,
         context: context,
-        onSave: (String editedMessage) async {
-          String currentUserId = authentication.getCurrentuser()!.uid;
-          String otherUserId = data['senderId'] == currentUserId
-              ? data['receiverID']
-              : data['senderId'];
-
-          String chatRoomId = getChatRoomId(
-            currentUserId,
-            otherUserId,
-          );
-          await chatService.editMessage(
-            editedMessage,
-            chatRoomId,
-            messageId,
-          );
-        },
+        onSave: handleEdit,
         customTextField: (controller) => TextField(
           controller: controller,
           decoration: const InputDecoration(
@@ -170,16 +323,12 @@ class ChatPage extends StatelessWidget {
           ),
         ),
       ),
-      message: data['message'] ?? '',
-      isCurrentUser: isCurrentUser,
-      alignment: alignment,
-      userId: data['senderId'],
     );
   }
 
   Widget buildMessageInput() {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(10.0),
       child: Column(
         children: [
           Row(
@@ -196,14 +345,29 @@ class ChatPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   color: Colors.green,
                 ),
-                child: IconButton(
-                  onPressed: sendmessage,
-                  icon: Icon(Icons.send, color: Colors.white),
-                ),
+                child: _isLoading
+                    ? const Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      )
+                    : IconButton(
+                        onPressed: sendmessage,
+                        icon: const Icon(
+                          Icons.send,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ],
           ),
-          SizedBox(height: 20),
+          SizedBox(height: 5),
         ],
       ),
     );

@@ -1,3 +1,5 @@
+import 'package:chat_app_provider/models/UserModel.dart';
+import 'package:chat_app_provider/services/Isar_services/Isar_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -41,6 +43,13 @@ class Authentication {
             password: password,
           );
 
+      final user = UserModel()
+        ..uid = userCredential.user!.uid
+        ..name = name
+        ..email = email
+        ..timestamp = DateTime.now();
+
+      // Firestore mein save karein
       await firestore
           .collection('Users')
           .doc(userCredential.user!.uid)
@@ -48,25 +57,29 @@ class Authentication {
             'uid': userCredential.user!.uid,
             'email': email,
             'username': name,
-            'AddedUser': false,
           });
+
+      if (context.mounted) {
+        await IsarService.addUser(context, user);
+      }
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
-      await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Error'),
-          content: Text(e.message ?? 'Something went wrong'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
-
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Error'),
+            content: Text(e.message ?? 'Something went wrong'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
       return null;
     }
   }

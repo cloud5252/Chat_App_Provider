@@ -7,6 +7,9 @@ class MyMessageEdit extends StatelessWidget {
   final String message;
   final String userId;
   final bool isCurrentUser;
+  final int isRead;
+  final bool isDelivered;
+  final DateTime time;
   final Alignment alignment;
   final VoidCallback? onEdit;
   final VoidCallback? onCopy;
@@ -15,6 +18,9 @@ class MyMessageEdit extends StatelessWidget {
   const MyMessageEdit({
     super.key,
     required this.message,
+    required this.isDelivered,
+    required this.isRead,
+    required this.time,
     required this.userId,
     required this.isCurrentUser,
     required this.alignment,
@@ -25,67 +31,27 @@ class MyMessageEdit extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextStyle textStyle = TextStyle(
-      fontSize: 18,
-      color: Theme.of(context).colorScheme.inversePrimary,
+    print(
+      "DEBUG: Message:::::::::::::::::::::::::::: $message | isRead: $isRead",
     );
-
-    return GestureDetector(
-      onLongPressStart: (LongPressStartDetails details) {
-        showMenu(
-          context: context,
-          position: RelativeRect.fromLTRB(
-            details.globalPosition.dx - 150,
-            details.globalPosition.dy,
-            details.globalPosition.dx,
-            details.globalPosition.dy,
-          ),
-          color: Theme.of(context).colorScheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-            side: BorderSide(color: Colors.grey[700]!, width: 0.2),
-          ),
-          elevation: 4,
-          items: [
-            PopupMenuItem(
-              child: Row(
-                children: [
-                  Text('Edit', style: textStyle),
-                  Spacer(),
-                  Icon(Icons.edit, color: Colors.green),
-                ],
-              ),
-              onTap: onEdit,
-            ),
-            PopupMenuItem(
-              child: Row(
-                children: [
-                  Text('Copy', style: textStyle),
-                  Spacer(),
-                  Icon(Icons.copy, color: Colors.orange),
-                ],
-              ),
-              onTap: onCopy,
-            ),
-            PopupMenuItem(
-              child: Row(
-                children: [
-                  Text('Delete', style: textStyle),
-                  Spacer(),
-
-                  Icon(Icons.delete, color: Colors.red),
-                ],
-              ),
-              onTap: onDelete,
-            ),
-          ],
-        );
-      },
-      child: Container(
-        alignment: alignment,
+    return Align(
+      alignment: isCurrentUser
+          ? Alignment.centerRight
+          : Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 8.0,
+          vertical: 4.0,
+        ),
         child: ChatBubble(
+          onEdit: onEdit,
+          onCopy: onCopy,
+          onDelete: onDelete,
           message: message,
           isCurrentUser: isCurrentUser,
+          isDelivered: isDelivered,
+          time: time,
+          isRead: isRead,
         ),
       ),
     );

@@ -1,11 +1,15 @@
 import 'package:chat_app_provider/components/userTile.dart';
 import 'package:chat_app_provider/pages/chat_page.dart';
+import 'package:chat_app_provider/pages/set_languag.dart';
+import 'package:chat_app_provider/services/Isar_services/Isar_service.dart';
+import 'package:chat_app_provider/services/Isar_services/local_service.dart';
 import 'package:chat_app_provider/services/auth/authentication.dart';
 import 'package:chat_app_provider/services/chat/chat_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import '../components/MY_drawer.dart';
 
 final ChatService service = ChatService();
@@ -104,11 +108,26 @@ void addNewUser(BuildContext context) {
   );
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final LocalService authService = LocalService();
+
   void logout() {
     final auth = Authentication();
     auth.logOut();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    ChatService().listenForDeliveryStatus();
   }
 
   @override
@@ -119,11 +138,30 @@ class HomePage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.grey,
         centerTitle: true,
-        title: Text('Home'),
+        title: const Text('Home'),
         actions: [
-          IconButton(
-            onPressed: () => logout(),
-            icon: Icon(Icons.logout),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == 'Setting') {}
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'Setting',
+                onTap: () {
+                  Future.delayed(
+                    const Duration(seconds: 0),
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SetLanguag(),
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Setting'),
+              ),
+            ],
           ),
         ],
       ),
@@ -138,38 +176,34 @@ class HomePage extends StatelessWidget {
   }
 
   Widget geruserbuilder() {
-    return StreamBuilder(
-      stream: service.getCurrentUserAddedUsers(getUser()!.email!),
+    final user = getUser();
+    if (user == null) {
+      return const Center(child: Text("No User Logged In"));
+    }
+
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: service.getCurrentUserAddedUsers(user.email!, user.uid),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const Text('Error');
+          return Center(child: Text("Error: ${snapshot.error}"));
         }
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: const CircularProgressIndicator());
+
+        final usersList = snapshot.data ?? [];
+
+        if (usersList.isEmpty &&
+            snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
         }
-        final usersList = snapshot.data!;
 
-        final filteredUsers = usersList;
-
-        if (filteredUsers.isEmpty) {
-          return Center(
-            child: Text(
-              "No User",
-              style: TextStyle(
-                fontSize: 22,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          );
+        if (usersList.isEmpty) {
+          return const Center(child: Text("No User Found"));
         }
-        // AddUser value nikal lo
 
-        return ListView(
-          children: filteredUsers
-              .map<Widget>(
-                (userData) => builduserlistitem(userData, context),
-              )
-              .toList(),
+        return ListView.builder(
+          itemCount: usersList.length,
+          itemBuilder: (context, index) {
+            return builduserlistitem(usersList[index], context);
+          },
         );
       },
     );
@@ -182,6 +216,7 @@ class HomePage extends StatelessWidget {
     return Usertile(
       text: userdata['Name'] ?? '',
       ontap: () {
+        final myId = FirebaseAuth.instance.currentUser?.uid ?? '';
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -189,6 +224,7 @@ class HomePage extends StatelessWidget {
               recieverEmail: userdata['Email'],
               userName: userdata['Name'],
               recieverId: userdata['uid'],
+              myId: myId,
             ),
           ),
         );
