@@ -280,11 +280,16 @@ class _ChatPageState extends State<ChatPage> {
         : Alignment.topLeft;
 
     Future<void> handleDelete() async {
-      try {
-        await chatService.deleteMessage(chatRoomId, messageId);
-        chatEditService.showSuccessMessage('Message deleted');
-      } catch (e) {
-        chatEditService.showErrorMessage('Failed to delete message');
+      final String isarIdStr = data['id']?.toString() ?? "";
+      final String firebaseIdStr =
+          data['messageId']?.toString() ?? "";
+
+      if (isarIdStr.isNotEmpty) {
+        await chatService.deleteMessage(
+          chatRoomId,
+          firebaseIdStr,
+          isarIdStr,
+        );
       }
     }
 
@@ -306,7 +311,9 @@ class _ChatPageState extends State<ChatPage> {
       time: timestamp,
       onDelete: () => chatEditService.showDeleteDialog(
         context: context,
-        onDelete: handleDelete,
+        onDelete: () async {
+          await handleDelete();
+        },
       ),
       onCopy: () =>
           chatEditService.copyToClipboard(messageText, context),
@@ -314,7 +321,7 @@ class _ChatPageState extends State<ChatPage> {
         messageText,
         data,
         context: context,
-        onSave: handleEdit,
+        onSave: (val) => handleEdit(val),
         customTextField: (controller) => TextField(
           controller: controller,
           decoration: const InputDecoration(

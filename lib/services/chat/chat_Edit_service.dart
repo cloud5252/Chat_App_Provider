@@ -72,7 +72,7 @@ class ChatEditService {
       borderRadius: 10,
       margin: EdgeInsets.all(10),
       icon: Icon(Icons.check_circle, color: Colors.green),
-      duration: Duration(milliseconds: 700),
+      duration: Duration(seconds: 1),
       isDismissible: true,
       dismissDirection: DismissDirection.horizontal,
     );
@@ -127,7 +127,7 @@ class ChatEditService {
       borderRadius: 10,
       margin: const EdgeInsets.all(10),
       icon: const Icon(Icons.check_circle, color: Colors.white),
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(seconds: 1),
     );
   }
 
@@ -142,7 +142,7 @@ class ChatEditService {
       borderRadius: 10,
       margin: const EdgeInsets.all(10),
       icon: const Icon(Icons.error, color: Colors.white),
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(seconds: 1),
     );
   }
 }

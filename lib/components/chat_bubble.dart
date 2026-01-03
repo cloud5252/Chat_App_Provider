@@ -123,43 +123,41 @@ class ChatBubble extends StatelessWidget {
               vertical: 4,
             ),
 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  message,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: isCurrentUser
-                        ? Colors.white
-                        : (isDarkMode ? Colors.white : Colors.black),
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "${time.hour}:${time.minute.toString().padLeft(2, '0')}",
+            child: IntrinsicWidth(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: Text(
+                      message,
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 16,
                         color: isCurrentUser
-                            ? Colors.white70
-                            : (isDarkMode
-                                  ? Colors.white
-                                  : Colors.black),
+                            ? Colors.white
+                            : Colors.black,
                       ),
                     ),
+                  ),
 
-                    const SizedBox(width: 4),
-
-                    if (isCurrentUser) buildStatusIcon(isRead),
-                  ],
-                ),
-              ],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        "${time.hour}:${time.minute.toString().padLeft(2, '0')}",
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isCurrentUser
+                              ? Colors.white70
+                              : Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      if (isCurrentUser) buildStatusIcon(isRead),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

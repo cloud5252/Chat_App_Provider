@@ -1,7 +1,7 @@
 import 'package:chat_app_provider/components/userTile.dart';
 import 'package:chat_app_provider/pages/chat_page.dart';
 import 'package:chat_app_provider/pages/set_languag.dart';
-import 'package:chat_app_provider/services/Isar_services/Isar_service.dart';
+
 import 'package:chat_app_provider/services/Isar_services/local_service.dart';
 import 'package:chat_app_provider/services/auth/authentication.dart';
 import 'package:chat_app_provider/services/chat/chat_service.dart';
@@ -9,7 +9,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 import '../components/MY_drawer.dart';
 
 final ChatService service = ChatService();

@@ -39,7 +39,7 @@ class ChatService {
         ..receiverId = receiverId
         ..messageText = messageText
         ..timestamp = now
-        ..isRead = 0; // Hamesha 0 se start karein
+        ..isRead = 0;
 
       await db.writeTxn(() => db.chatMessages.put(localMessage));
       debugPrint("🕒 Isar: Clock Icon set");
@@ -57,10 +57,9 @@ class ChatService {
         'timestamp': Timestamp.fromDate(now),
         'message': messageText,
         'messageId': generatedFirebaseId,
-        'isRead': 1, // Firebase par pohanchte hi 1 (Single Tick)
+        'isRead': 1,
       });
 
-      // 3. UPDATE LOCAL ISAR (Status 1)
       final db = IsarService.isar;
       final savedMessage = await db.chatMessages
           .filter()
@@ -69,13 +68,11 @@ class ChatService {
 
       if (savedMessage != null) {
         await db.writeTxn(() async {
-          savedMessage.isRead = 1;
           await db.chatMessages.put(savedMessage);
         });
       }
       debugPrint("✅ Firebase: Single Tick set");
     } catch (e) {
-      // Agar error aaye (Internet nahi hai), toh Isar mein status 0 hi rahega
       debugPrint("📡 Offline: Status remains 0 (Clock)");
     }
   }
@@ -346,55 +343,57 @@ class ChatService {
 
   Future<void> editMessage(
     String newMessage,
-    String chatRoomId,
+    String roomId,
     String messageId,
   ) async {
     try {
       await firestore
           .collection('chat_rooms')
-          .doc(chatRoomId)
+          .doc(roomId)
           .collection('messages')
           .doc(messageId)
-          .update({
-            'message': newMessage,
-            'isEdited': true,
-            'editedAt': Timestamp.now(),
-          });
+          .update({'message': newMessage, 'isEdited': true});
 
-      print('Message updated successfully');
+      final isar = IsarService.isar;
+      final localMsg = await isar.chatMessages
+          .filter()
+          .firebaseIdEqualTo(messageId)
+          .findFirst();
+
+      if (localMsg != null) {
+        await isar.writeTxn(() async {
+          localMsg.messageText = newMessage;
+          await isar.chatMessages.put(localMsg);
+        });
+        debugPrint("✅ Firestore and Isar updated!");
+      }
     } catch (e) {
-      print('Error updating message: $e');
+      debugPrint("❌ Update Error: $e");
     }
   }
 
-  Future<void> deleteMessage(String chatRoomId, String isarId) async {
+  Future<void> deleteMessage(
+    String chatRoomId,
+    String fId,
+    String isarId,
+  ) async {
     try {
+      int? localId = int.tryParse(isarId);
+
+      if (localId == null) {
+        return;
+      }
+
       final db = IsarService.isar;
-      int localId = int.parse(isarId);
+      await db.writeTxn(() => db.chatMessages.delete(localId));
 
-      // 1. Pehle Isar se message nikaal lein
-      final message = await db.chatMessages.get(localId);
-
-      if (message != null) {
-        String? fId = message.firebaseId;
-
-        await db.writeTxn(() => db.chatMessages.delete(localId));
-        debugPrint("✅ Deleted from Isar locally");
-
-        if (fId != null) {
-          firestore
-              .collection('chat_rooms')
-              .doc(chatRoomId)
-              .collection('messages')
-              .doc(fId)
-              .delete()
-              .then((_) => debugPrint("✅ Deleted from Firestore"))
-              .catchError(
-                (e) => debugPrint(
-                  "❌ Firestore delete failed (Offline): $e",
-                ),
-              );
-        }
+      if (fId.isNotEmpty) {
+        await firestore
+            .collection('chat_rooms')
+            .doc(chatRoomId)
+            .collection('messages')
+            .doc(fId)
+            .delete();
       }
     } catch (e) {
       debugPrint("❌ Delete error: $e");
