@@ -24,7 +24,9 @@ class MyDrawer extends StatelessWidget {
                 child: Center(
                   child: Icon(
                     Icons.message,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.inversePrimary,
                     size: 40,
                   ),
                 ),
@@ -34,12 +36,16 @@ class MyDrawer extends StatelessWidget {
                 child: ListTile(
                   leading: Icon(
                     Icons.home,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.inversePrimary,
                   ),
                   title: Text(
                     'H O M E',
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.inversePrimary,
                       fontSize: 20,
                     ),
                   ),
@@ -53,12 +59,16 @@ class MyDrawer extends StatelessWidget {
                 child: ListTile(
                   leading: Icon(
                     Icons.settings,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.inversePrimary,
                   ),
                   title: Text(
                     'S E T T I N G',
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.inversePrimary,
                       fontSize: 20,
                     ),
                   ),
@@ -81,12 +91,12 @@ class MyDrawer extends StatelessWidget {
             child: ListTile(
               leading: Icon(
                 Icons.logout,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.inversePrimary,
               ),
               title: Text(
                 'L O G O U T',
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Theme.of(context).colorScheme.inversePrimary,
                   fontSize: 20,
                 ),
               ),

@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names, use_build_context_synchronously
+
 import 'package:chat_app_provider/services/auth/authentication.dart';
 import 'package:chat_app_provider/components/My_button.dart';
 import 'package:chat_app_provider/components/My_text_feilds.dart';

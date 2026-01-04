@@ -39,25 +39,25 @@ class ChatBubble extends StatelessWidget {
       case 1: // Sent (Cloud)
         return const Icon(
           Icons.done,
-          size: 14,
+          size: 20,
           color: Colors.white70,
         );
       case 2: // Delivered
         return const Icon(
           Icons.done_all,
-          size: 14,
+          size: 20,
           color: Colors.white70,
         );
       case 3: // Seen
         return const Icon(
           Icons.done_all,
-          size: 14,
+          size: 20,
           color: Colors.blue,
         );
       default:
         return const Icon(
           Icons.access_time,
-          size: 12,
+          size: 15,
           color: Colors.white70,
         );
     }
@@ -110,7 +110,7 @@ class ChatBubble extends StatelessWidget {
                         ? Colors.green.shade600
                         : Colors.green.shade500)
                   : (isDarkMode
-                        ? Colors.grey.shade800
+                        ? Colors.grey.shade600
                         : Colors.grey.shade200),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -146,10 +146,10 @@ class ChatBubble extends StatelessWidget {
                       Text(
                         "${time.hour}:${time.minute.toString().padLeft(2, '0')}",
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 14,
                           color: isCurrentUser
-                              ? Colors.white70
-                              : Colors.black54,
+                              ? Colors.white
+                              : Colors.white,
                         ),
                       ),
                       const SizedBox(width: 4),

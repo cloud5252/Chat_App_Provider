@@ -1,3 +1,4 @@
+import 'package:chat_app_provider/Themes/theme_provider.dart';
 import 'package:chat_app_provider/components/userTile.dart';
 import 'package:chat_app_provider/pages/chat_page.dart';
 import 'package:chat_app_provider/pages/set_languag.dart';
@@ -9,6 +10,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import '../components/MY_drawer.dart';
 
 final ChatService service = ChatService();
@@ -131,6 +133,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    bool isDarkMode = Provider.of<ThemeProvider>(
+      context,
+      listen: false,
+    ).isDarkMode;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
@@ -140,6 +146,19 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Home'),
         actions: [
           PopupMenuButton<String>(
+            color: isDarkMode
+                ? Colors.grey.shade600
+                : Colors.grey.shade300,
+
+            shape: RoundedRectangleBorder(
+              side: BorderSide(
+                color: isDarkMode
+                    ? Colors.white24
+                    : Colors.grey.shade300,
+                width: 1,
+              ),
+              borderRadius: BorderRadius.circular(6),
+            ),
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
               if (value == 'Setting') {}

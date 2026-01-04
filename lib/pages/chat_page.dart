@@ -350,7 +350,7 @@ class _ChatPageState extends State<ChatPage> {
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
-                  color: Colors.green,
+                  color: Colors.green.shade400,
                 ),
                 child: _isLoading
                     ? const Padding(

@@ -2,7 +2,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 
 class GeminiTranslator {
   static const String apiKey =
-      "AIzaSyAQHLMnLAznmgEILlmrqaeDbjIId3WfOR0";
+      "";
 
   static Future<String> translateToEnglish(String message) async {
     try {
