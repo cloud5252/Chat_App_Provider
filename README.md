@@ -1,16 +1,27 @@
-# chat_app_provider
+# 💬 ChatApp — Real-Time Chat with AI Translation
 
-A new Flutter project.
+A Flutter chat app with automatic language translation 
+powered by Gemini AI.
+
+## Features
+- Real-time messaging with Firebase Firestore
+- 🌙 Light and Dark mode
+- 🤖 Auto language translation using Gemini API
+- User types in any language → sends in English
+- Firebase Authentication (Email)
+- Provider state management
+- Clean and responsive UI
+
+## Tech Stack
+- Flutter & Dart
+- Firebase (Auth, Firestore)
+- Provider State Management
+- Gemini AI API (Translation)
+- Git & GitHub
 
 ## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the repo
+2. Add Firebase config
+3. Add Gemini API key
+4. Run `flutter pub get`
+5. Run `flutter run`
